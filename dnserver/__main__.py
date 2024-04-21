@@ -1,7 +1,7 @@
 """
 This allows usage via `python -m dnserver`
 """
-from dnserver.cli import cli
+from dnserver.dnserver.cli import cli
 
 # from .cli import cli
 
