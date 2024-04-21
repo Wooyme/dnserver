@@ -10,7 +10,7 @@ from dnslib import QTYPE, RR, DNSLabel, dns
 from dnslib.proxy import ProxyResolver as LibProxyResolver
 from dnslib.server import BaseResolver as LibBaseResolver, DNSServer as LibDNSServer
 
-from .dns_server import EnhancedDNSHandler
+from .dns_server import get_handler
 from .load_records import Records, Zone, load_records
 
 __all__ = 'DNSServer', 'logger'
@@ -172,8 +172,8 @@ class DNSServer:
             logger.info('starting DNS server on port %d, without upstream DNS server', self.port)
             resolver = BaseResolver(self.records)
 
-        self.udp_server = LibDNSServer(resolver, port=self.port,handler=EnhancedDNSHandler, tcp=False)
-        self.tcp_server = LibDNSServer(resolver, port=self.port,handler=EnhancedDNSHandler, tcp=True)
+        self.udp_server = LibDNSServer(resolver, port=self.port,handler=get_handler(logger), tcp=False)
+        self.tcp_server = LibDNSServer(resolver, port=self.port,handler=get_handler(logger), tcp=True)
         self.udp_server.start_thread()
         self.tcp_server.start_thread()
 
