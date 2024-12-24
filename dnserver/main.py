@@ -10,7 +10,7 @@ from dnslib import QTYPE, RR, DNSLabel, dns
 from dnslib.proxy import ProxyResolver as LibProxyResolver
 from dnslib.server import BaseResolver as LibBaseResolver, DNSServer as LibDNSServer
 
-from .dns_server import get_handler
+from .dns_server import EnhancedDNSHandler
 from .load_records import Records, Zone, load_records
 
 __all__ = 'DNSServer', 'logger'
@@ -20,9 +20,12 @@ SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 handler.setFormatter(logging.Formatter('%(asctime)s: %(message)s', datefmt='%H:%M:%S'))
-
+file_handler = logging.FileHandler("dns.log")
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s: %(message)s', datefmt='%H:%M:%S'))
 logger = logging.getLogger(__name__)
 logger.addHandler(handler)
+logger.addHandler(file_handler)
 logger.setLevel(logging.INFO)
 
 TYPE_LOOKUP = {
@@ -140,10 +143,10 @@ class ProxyResolver(LibProxyResolver):
 
 class DNSServer:
     def __init__(
-        self,
-        records: Records | None = None,
-        port: int | str | None = DEFAULT_PORT,
-        upstream: str | None = DEFAULT_UPSTREAM,
+            self,
+            records: Records | None = None,
+            port: int | str | None = DEFAULT_PORT,
+            upstream: str | None = DEFAULT_UPSTREAM,
     ):
         self.port: int = DEFAULT_PORT if port is None else int(port)
         self.upstream: str | None = upstream
@@ -153,7 +156,8 @@ class DNSServer:
 
     @classmethod
     def from_toml(
-        cls, zones_file: str | Path, *, port: int | str | None = DEFAULT_PORT, upstream: str | None = DEFAULT_UPSTREAM
+            cls, zones_file: str | Path, *, port: int | str | None = DEFAULT_PORT,
+            upstream: str | None = DEFAULT_UPSTREAM
     ) -> 'DNSServer':
         records = load_records(zones_file)
         logger.info(
@@ -172,8 +176,8 @@ class DNSServer:
             logger.info('starting DNS server on port %d, without upstream DNS server', self.port)
             resolver = BaseResolver(self.records)
 
-        self.udp_server = LibDNSServer(resolver, port=self.port,handler=get_handler(logger), tcp=False)
-        self.tcp_server = LibDNSServer(resolver, port=self.port,handler=get_handler(logger), tcp=True)
+        self.udp_server = LibDNSServer(resolver, port=self.port, handler=EnhancedDNSHandler, tcp=False)
+        self.tcp_server = LibDNSServer(resolver, port=self.port, handler=EnhancedDNSHandler, tcp=True)
         self.udp_server.start_thread()
         self.tcp_server.start_thread()
 
