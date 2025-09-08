@@ -28,8 +28,8 @@ def on_message(client, userdata, msg):
 mqttc = mqtt.Client()
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
-mqttc.username_pw_set('core', 'c0re_22yun_0rg')
-mqttc.connect("core.zzyun.org", 1883, 60)
+mqttc.username_pw_set('mqtt0', 'mqtt0_22yun_0rg')
+mqttc.connect("mqtt0.zzyun.org", 1883, 60)
 mqttc.loop_start()
 
 
