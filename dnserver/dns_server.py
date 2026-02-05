@@ -14,9 +14,6 @@ redis_client = Redis()
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
-    # Subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will be renewed.
-    # client.subscribe("$SYS/#")
     client.publish("/dns_server/startup", "Hello")
 
 
