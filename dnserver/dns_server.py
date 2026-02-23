@@ -1,10 +1,14 @@
 import logging
+import socket
+import struct
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from logging.handlers import TimedRotatingFileHandler
 import paho.mqtt.client as mqtt
 
 import dnslib
-from dnslib import DNSRecord, RR, QTYPE
+from dnslib import DNSRecord, RR, QTYPE, DNSError
 from dnslib.server import DNSHandler
 from redis import Redis
 
@@ -57,8 +61,54 @@ def setup_logger():
 
 logger = setup_logger()
 
+executor = ThreadPoolExecutor(max_workers=64)
+
 
 class EnhancedDNSHandler(DNSHandler):
+    def _repeat_send(self, sock, payload, addr, interval=0.2, times=5):
+        for _ in range(times):
+            try:
+                sock.sendto(payload, addr)
+            except OSError:
+                # 客户端不可达/套接字关闭等，直接停止
+                break
+            time.sleep(interval)
+
+    def handle(self):
+        if self.server.socket_type == socket.SOCK_STREAM:
+            self.protocol = 'tcp'
+            data = self.request.recv(8192)
+            if len(data) < 2:
+                logger.error("Request Truncated")
+                return
+            length = struct.unpack("!H", bytes(data[:2]))[0]
+            while len(data) - 2 < length:
+                new_data = self.request.recv(8192)
+                if not new_data:
+                    break
+                data += new_data
+            data = data[2:]
+        else:
+            self.protocol = 'udp'
+            data, connection = self.request
+        try:
+            rdata = self.get_reply(data)
+            if self.protocol == 'tcp':
+                rdata = struct.pack("!H", len(rdata)) + rdata
+                self.request.sendall(rdata)
+            else:
+                executor.submit(
+                    self._repeat_send,
+                    connection,
+                    rdata,
+                    self.client_address,
+                    0.2,
+                    5
+                )
+
+        except DNSError as e:
+            logger.error(e)
+
     def get_reply(self, data):
         request = DNSRecord.parse(data)
         logger.info(f"{self.client_address[0]} {request.q.qname}")

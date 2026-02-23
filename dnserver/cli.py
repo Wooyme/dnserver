@@ -6,8 +6,8 @@ import signal
 import sys
 from time import sleep
 
-from .main import DEFAULT_UPSTREAM, DNSServer, logger
-from .version import VERSION
+from main import DEFAULT_UPSTREAM, DNSServer, logger
+from version import VERSION
 
 __all__ = ('cli',)
 

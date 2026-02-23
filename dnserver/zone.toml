@@ -1,0 +1,5 @@
+# this is an example zones file
+[[zones]]
+host = 'example.com'
+type = 'A'
+answer = '1.2.3.4'

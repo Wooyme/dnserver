@@ -10,8 +10,8 @@ from dnslib import QTYPE, RR, DNSLabel, dns
 from dnslib.proxy import ProxyResolver as LibProxyResolver
 from dnslib.server import BaseResolver as LibBaseResolver, DNSServer as LibDNSServer
 
-from .dns_server import EnhancedDNSHandler
-from .load_records import Records, Zone, load_records
+from dns_server import EnhancedDNSHandler
+from load_records import Records, Zone, load_records
 
 __all__ = 'DNSServer', 'logger'
 
